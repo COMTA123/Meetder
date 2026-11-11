@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meetion | Create Meeting</title>
+    <style>
+        .type-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .type-option input {
+            position: absolute;
+            opacity: 0;
+        }
+        .type-option .box {
+            display: block;
+            padding: 20px 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+        }
+        .type-option .box:hover {
+            border-color: #888;
+        }
+        .type-option input:checked + .box {
+            border-color: #2563eb;
+            background: #eff6ff;
+            font-weight: bold;
+        }
+        .type-option input:focus-visible + .box {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+        .agenda-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .agenda-item > div {
+            flex: 1;
+        }
+        .agenda-item p {
+            margin: 4px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <form action="/meeting/create" method="POST">
+        <h2>Create Meeting</h2>
+        <p>Select type of your meeting</p>
+
+        <div class="type-options">
+            <label class="type-option">
+                <input type="radio" name="meetingType" value="BrainStorm" required>
+                <span class="box">BrainStorm</span>
+            </label>
+            <label class="type-option">
+                <input type="radio" name="meetingType" value="Decision">
+                <span class="box">Decision</span>
+            </label>
+            <label class="type-option">
+                <input type="radio" name="meetingType" value="Update">
+                <span class="box">Weekly Update</span>
+            </label>
+            <label class="type-option">
+                <input type="radio" name="meetingType" value="seminar">
+                <span class="box">Seminar</span>
+            </label>
+            <label class="type-option">
+                <input type="radio" name="meetingType" value="Custom">
+                <span class="box">Custom</span>
+            </label>
+        </div>
+        <div>
+            <!-- เพิ่ม agenda การประชุม ใส่ชื่อ เวลาและรายละเอียด-->
+            <input type="text" id="agendaTitle" placeholder="Title">
+            <input type="number" id="agendaTime" value="10" min="1"> min
+            <input type="text" id="agendaDetail" placeholder="Details">
+            <button type="button" id="agendaBtn">add agenda</button>
+            <div class="agenda" id="agendaList"></div>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        const agendas = [];
+        let editIndex = -1;
+        const titleEl = document.getElementById('agendaTitle');
+        const timeEl = document.getElementById('agendaTime');
+        const detailEl = document.getElementById('agendaDetail');
+        const btn = document.getElementById('agendaBtn');
+        const list = document.getElementById('agendaList');
+
+        function resetInputs() {
+            titleEl.value = '';
+            timeEl.value = 10;
+            detailEl.value = '';
+            editIndex = -1;
+            btn.textContent = 'add agenda';
+        }
+
+        function render() {
+            list.innerHTML = '';
+            agendas.forEach((a, i) => {
+                const box = document.createElement('div');
+                box.className = 'agenda-item';
+
+                const info = document.createElement('div');
+                const h = document.createElement('strong');
+                h.textContent = a.title + ' (' + a.time + ' min)';
+                const p = document.createElement('p');
+                p.textContent = a.detail;
+                info.append(h, p);
+
+                const edit = document.createElement('button');
+                edit.type = 'button';
+                edit.textContent = 'Edit';
+                edit.onclick = () => {
+                    titleEl.value = a.title;
+                    timeEl.value = a.time;
+                    detailEl.value = a.detail;
+                    editIndex = i;
+                    btn.textContent = 'save agenda';
+                    titleEl.focus();
+                };
+
+                const del = document.createElement('button');
+                del.type = 'button';
+                del.textContent = 'Delete';
+                del.onclick = () => {
+                    agendas.splice(i, 1);
+                    if (editIndex === i) resetInputs();
+                    else if (editIndex > i) editIndex--;
+                    render();
+                };
+
+                // ส่งค่าไปพร้อมฟอร์ม
+                [['agendaTitle', a.title], ['agendaTime', a.time], ['agendaDetail', a.detail]].forEach(([n, v]) => {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = n + '[]';
+                    hidden.value = v;
+                    box.appendChild(hidden);
+                });
+
+                box.append(info, edit, del);
+                list.appendChild(box);
+            });
+        }
+
+        // Preset agenda ของแต่ละประเภท (key = value ของ radio) — detail เว้นไว้ให้ใส่เอง
+        const presets = {
+            BrainStorm: [ // BrainStorm
+                { title: 'Problem statement', time: 5, detail: '' },
+                { title: 'Idea generation', time: 20, detail: '' },
+                { title: 'Group & prioritize ideas', time: 10, detail: '' },
+                { title: 'Next steps', time: 5, detail: '' }
+            ],
+            Decision: [ // Decision
+                { title: 'Context & background', time: 5, detail: '' },
+                { title: 'Options discussion', time: 15, detail: '' },
+                { title: 'Decision', time: 10, detail: '' },
+                { title: 'Action items', time: 5, detail: '' }
+            ],
+            Update: [ // Weekly Update
+                { title: 'Last week review', time: 10, detail: '' },
+                { title: 'Progress updates', time: 15, detail: '' },
+                { title: 'Blockers', time: 10, detail: '' },
+                { title: 'Plan for next week', time: 5, detail: '' }
+            ],
+            seminar: [
+                { title: 'Introduction', time: 5, detail: '' },
+                { title: 'Main presentation', time: 30, detail: '' },
+                { title: 'Q&A', time: 15, detail: '' },
+                { title: 'Closing', time: 5, detail: '' }
+            ],
+            Custom: [] // Custom: ไม่มี preset
+        };
+
+        document.querySelectorAll('input[name="meetingType"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                agendas.length = 0;
+                (presets[radio.value] || []).forEach(a => agendas.push({ ...a }));
+                resetInputs();
+                render();
+            });
+        });
+
+        btn.onclick = () => {
+            const title = titleEl.value.trim();
+            if (!title) { titleEl.focus(); return; }
+            const item = { title, time: timeEl.value || 0, detail: detailEl.value.trim() };
+            if (editIndex >= 0) agendas[editIndex] = item;
+            else agendas.push(item);
+            resetInputs();
+            render();
+        };
+    </script>
+</body>
+</html>
