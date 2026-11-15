@@ -5,8 +5,12 @@ const port = 3000;
 // Creating the Express server
 const app = express();
 
-// Connect to SQLite database
-
+// Connect to database
+const pool = require("./db");
+pool
+  .query("SELECT NOW()")
+  .then((r) => console.log("PostgreSQL connected:", r.rows[0].now))
+  .catch((err) => console.error("PostgreSQL connection failed:", err.message));
 
 // static resourse & templating engine
 app.use(express.static('public'));

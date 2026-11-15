@@ -13,6 +13,7 @@ Table meeting {
   created_at timestamp
   status text
   ended_at timestamp
+  note text
 }
 
 Table agenda {
@@ -20,6 +21,7 @@ Table agenda {
   title varchar
   time integer
   description text
+  meeting_id integer 
 }
 
 // Ref user_posts: posts.user_id ?> users.id // many-to-one
@@ -45,3 +47,5 @@ Table agenda {
 //   1, 'Guidelines', 1
 //   2, 'Hello all!', 3
 // }
+
+Ref: "meeting"."id" ?<? "agenda"."meeting_id"
