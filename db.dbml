@@ -8,8 +8,9 @@
 // }
 
 Table meeting {
-  id integer [primary key]
+  id integer [primary key, increment]
   host_id integer
+  meeting_name text
   created_at timestamp
   status text
   ended_at timestamp
@@ -17,7 +18,7 @@ Table meeting {
 }
 
 Table agenda {
-  id integer [primary key]
+  id integer [primary key, increment]
   title varchar
   time integer
   description text

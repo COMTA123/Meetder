@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS meeting (
   id         SERIAL PRIMARY KEY,
   host_id    INTEGER,
+  meeting_name TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   status     TEXT,
   ended_at   TIMESTAMP,
